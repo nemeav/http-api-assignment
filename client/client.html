@@ -5,7 +5,69 @@
   <link rel="stylesheet" type="text/css" href="/style.css">
   
   <script>
+    const handleResponse = (response) => {
+      response.text().then((resText) => {
+        const contentType = response.headers.get('Content-Type');
 
+        const content = document.querySelector('#content');
+
+        content.appendChild(document.createElement('hr'));
+
+        const h1 = document.createElement('h1');
+        const h2 = document.createElement('h2');
+
+        switch (response.status) {
+        case 200:
+          h1 = `<b>Success<b>`;
+          break;
+        case 400:
+          h1 = `<b>Bad Request<b>`;
+          break;
+        case 401:
+          h1 = `<b>Unauthorized<b>`;
+          break;
+        case 403:
+          h1 = `<b>Forbidden<b>`;
+          break;
+        case 500:
+          h1 = `<b>Internal Server Error<b>`;
+          break;
+        case 501:
+          h1 = `<b>Not Implemented<b>`;
+          break;
+        case 404:
+        default:
+          h1 `<b>Resource Not Found<b>`;
+          break;
+      }
+      })
+    }
+
+    const sendFetchRequest = async (url) => {
+      let response = await fetch(url);
+
+      handleResponse(response);
+    }
+
+    const init = () => {
+      // interaction elems
+      // drop down obj
+      const type = document.querySelector("#id");
+      //send button
+      const sendButton = document.querySelector("#send");
+
+      // funcs to call based on path
+      const sendJSON = () => sendFetchRequest(url.pathname, 'application/json');
+      const sendXML = () => sendFetchRequest(url.pathname, 'text/html');
+
+      if (type.option === "application/json") {
+        sendButton.addEventListener('click', sendJSON);
+      } else {
+        sendButton.addEventListener('click', sendXML);
+      }
+
+      window.onload = init;
+    }
   </script>
 </head>
 <body>
