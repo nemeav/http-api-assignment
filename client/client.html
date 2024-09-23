@@ -1,75 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <title>Our simple HTTP server</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
-  
+
   <script>
     const handleResponse = (response) => {
-      response.text().then((resText) => {
-        const contentType = response.headers.get('Content-Type');
+  response.text().then((resText) => {
+    const contentType = response.headers.get('Content-Type');
+    const content = document.querySelector('#content');
 
-        const content = document.querySelector('#content');
+    // clear for neatness/clarity between requests
+    content.innerHTML = '';
 
-        content.appendChild(document.createElement('hr'));
-
-        const h1 = document.createElement('h1');
-        const h2 = document.createElement('h2');
-
-        switch (response.status) {
-        case 200:
-          h1 = `<b>Success<b>`;
-          break;
-        case 400:
-          h1 = `<b>Bad Request<b>`;
-          break;
-        case 401:
-          h1 = `<b>Unauthorized<b>`;
-          break;
-        case 403:
-          h1 = `<b>Forbidden<b>`;
-          break;
-        case 500:
-          h1 = `<b>Internal Server Error<b>`;
-          break;
-        case 501:
-          h1 = `<b>Not Implemented<b>`;
-          break;
-        case 404:
-        default:
-          h1 `<b>Resource Not Found<b>`;
-          break;
-      }
-      })
+    // different status codes
+    switch (response.status) {
+      case 200:
+        content.innerHTML = `<b>Success</b>`;
+        break;
+      case 400:
+        content.innerHTML = `<b>Bad Request</b>`;
+        break;
+      case 401:
+        content.innerHTML = `<b>Unauthorized</b>`;
+        break;
+      case 403:
+        content.innerHTML = `<b>Forbidden</b>`;
+        break;
+      case 500:
+        content.innerHTML = `<b>Internal Server Error</b>`;
+        break;
+      case 501:
+        content.innerHTML = `<b>Not Implemented</b>`;
+        break;
+      case 404:
+      default:
+        content.innerHTML = `<b>Resource Not Found</b>`;
+        break;
     }
 
-    const sendFetchRequest = async (url) => {
-      let response = await fetch(url);
+    // console
+    // default to json
+    if (contentType === 'application/json') {
+      console.log(resText);
+    } else if (contentType === 'text/xml') {
+      // format xml parts
+      const parsedResponse = new window.DOMParser().parseFromString(resText, 'text/xml');
+      const message = parsedResponse.querySelector('message')?.textContent;
+      const id = parsedResponse.querySelector('id')?.textContent;
 
-      handleResponse(response);
-    }
-
-    const init = () => {
-      // interaction elems
-      // drop down obj
-      const type = document.querySelector("#id");
-      //send button
-      const sendButton = document.querySelector("#send");
-
-      // funcs to call based on path
-      const sendJSON = () => sendFetchRequest(url.pathname, 'application/json');
-      const sendXML = () => sendFetchRequest(url.pathname, 'text/html');
-
-      if (type.option === "application/json") {
-        sendButton.addEventListener('click', sendJSON);
+      // only log message if id is undefined
+      if (id === 'undefined') {
+        console.log(`<response><message>${message}</message></response>`);
       } else {
-        sendButton.addEventListener('click', sendXML);
+        console.log(resText); // Log the full response
       }
-
-      window.onload = init;
     }
+
+    // post message to page
+    // json
+    if (contentType === 'application/json') {
+      const parsedResponse = JSON.parse(resText);
+      content.innerHTML += `<p>Message: ${parsedResponse.message}</p>`;
+    } else if (contentType === 'text/xml') {
+      // xml
+      const parsedResponse = new window.DOMParser().parseFromString(resText, 'text/xml');
+      const message = parsedResponse.querySelector('message')?.textContent;
+      content.innerHTML += `<p>Message: ${message}</p>`;
+    }
+  });
+};
+
+// send the fetch request
+const sendFetchRequest = (url, acceptType) => {
+  fetch(url, {
+    headers: {
+      'Accept': acceptType
+    }
+  })
+    .then(response => handleResponse(response));
+};
+
+
+    // init interaction on page
+    const init = () => {
+      //page elems select
+      const pageSelect = document.querySelector('#page');
+      const fileSelect = document.querySelector('#type');
+      const sendButton = document.querySelector('#send');
+
+      sendButton.addEventListener('click', () => {
+        // send request based on dropdown select(s)
+        sendFetchRequest(pageSelect.value, fileSelect.value);
+      });
+    }
+
+    window.onload = init;
+
   </script>
 </head>
+
 <body>
   <section id="top">
     <h3>Status Code Tests</h3>
@@ -91,4 +122,5 @@
   <section id="content">
   </section>
 </body>
+
 </html>

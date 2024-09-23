@@ -1,7 +1,7 @@
 const http = require('http');
 // INSERT HANDLING FILE
 const htmlHandler = require('./htmlResponses.js');
-const responseHandler
+const responsesHandler = require('./responses.js'); // false error??? don't know why it's marking it wrong here but matches file and doesn't show up in test
 
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
 
@@ -10,12 +10,12 @@ const urlStruct = {
   // INSERT ENDPOINTS
   '/': htmlHandler.getIndex,
   '/style.css': htmlHandler.getCss,
-  '/success': responseHandler.success,
-  '/badRequest': responseHandler.badRequest,
-  '/unauthorized': responseHandler.unauthorized,
-  '/forbidden': responseHandler.forbidden,
-  '/internal': responseHandler.internal,
-  '/notImplemented': responseHandler.notImplemented,
+  '/success': responsesHandler.success,
+  '/badRequest': responsesHandler.badRequest,
+  '/unauthorized': responsesHandler.unauthorized,
+  '/forbidden': responsesHandler.forbidden,
+  '/internal': responsesHandler.internal,
+  '/notImplemented': responsesHandler.notImplemented,
 };
 
 // handle navigation
@@ -29,7 +29,7 @@ const onRequest = (request, response) => {
   if (urlStruct[parsedUrl.pathname]) {
     urlStruct[parsedUrl.pathname](request, response);
   } else {
-    urlStruct.notFound(request, response);
+    responsesHandler.notFound(request, response);
   }
 };
 

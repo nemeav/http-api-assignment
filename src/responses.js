@@ -1,19 +1,38 @@
+// import
+// helps check for add'l params
+const url = require('url');
+
 // JSON AND XML ONLY
 const respondFile = (request, response, status, object) => {
-  const content = JSON.stringify(object);
+  if (request.acceptedTypes[0] === 'text/xml') {
+    let xmlResponse = '<response>';
+    xmlResponse += `<message>${object.message}</message>`; // Always include message
 
-  response.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(content, 'utf8'),
-  });
+    // Include <id> only if it exists
+    if (object.id) {
+      xmlResponse += `<id>${object.id}</id>`;
+    }
 
-  response.write(content);
-  response.end();
-//     type = request.acceptedTypes[0]
-//   if (type === 'text/xml') {
-//     let responseXML = '<response>'
-//     responseXML = `${responseXML} `
-//   }
+    xmlResponse += '</response>';
+
+    response.writeHead(status, {
+      'Content-Type': 'text/xml',
+      'Content-Length': Buffer.byteLength(xmlResponse, 'utf8'),
+    });
+
+    response.write(xmlResponse);
+    response.end();
+  } else {
+    // JSON
+    const content = JSON.stringify(object);
+    response.writeHead(status, {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(content, 'utf8'),
+    });
+
+    response.write(content);
+    response.end();
+  }
 };
 
 // FUNCS FOR ENDPOINTS
@@ -26,17 +45,41 @@ const success = (request, response) => {
 };
 
 const badRequest = (request, response) => {
-  const responseFile = {
-    message: 'Missing valid query parameter set to true',
-  };
+  const parsedUrl = url.parse(request.url, true);
+  const { query } = parsedUrl;
+
+  let responseFile;
+
+  if (query.valid === 'true') {
+    responseFile = {
+      message: 'This request has the required parameters.',
+    };
+  } else {
+    responseFile = {
+      message: 'Missing valid query parameter set to true',
+      id: 'badRequest',
+    };
+  }
 
   respondFile(request, response, 400, responseFile);
 };
 
 const unauthorized = (request, response) => {
-  const responseFile = {
-    message: 'Missing loggedIn query parameter set to yes',
-  };
+  const parsedUrl = url.parse(request.url, true);
+  const { query } = parsedUrl;
+
+  let responseFile;
+
+  if (query.loggedIn === 'yes') {
+    responseFile = {
+      message: 'You have successfully viewed the content.',
+    };
+  } else {
+    responseFile = {
+      message: 'Missing loggedIn query parameter set to yes',
+      id: 'unauthorized',
+    };
+  }
 
   respondFile(request, response, 401, responseFile);
 };
